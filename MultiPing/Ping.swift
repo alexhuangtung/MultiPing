@@ -65,7 +65,9 @@ public class Ping: NSObject, SimplePingDelegate {
 			config.pinger.stop()
 			
 			tasks.removeValue(forKey: address)
-			print("Ping " + address + ": removed")
+            if !config.isQuiet {
+                print("Ping " + address + ": removed")
+            }
 		}
 	}
 	
@@ -80,14 +82,16 @@ public class Ping: NSObject, SimplePingDelegate {
 	
 	private func removeTask(for address: String) {
 		guard let config = tasks[address] else {
-			print("Tried to remove non-existent task with address " + address)
+            print("Tried to remove non-existent task with address " + address)
 			return
 		}
 		
 		config.timer?.invalidate()
 		config.pinger.stop()
 		tasks.removeValue(forKey: address)
-		print("Ping " + address + ": removed")
+        if !config.isQuiet {
+            print("Ping " + address + ": removed")
+        }
 	}
 	
 	// MARK: - SimplePingDelegate methods
@@ -97,7 +101,9 @@ public class Ping: NSObject, SimplePingDelegate {
 			return
 		}
 		
-		print("Ping " + address + ": didStartWithAddress")
+        if !config.isQuiet {
+            print("Ping " + address + ": didStartWithAddress")
+        }
 		
 		config.timer = Timer.scheduledTimer(timeInterval: config.timeout, target: self, selector: #selector(timedOut), userInfo: (address, config), repeats: false)
 		config.pingStart = Date.timeIntervalSinceReferenceDate
@@ -105,12 +111,14 @@ public class Ping: NSObject, SimplePingDelegate {
 	}
 	
 	public func simplePing(_ pinger: SimplePing, didSendPacket packet: Data, sequenceNumber: UInt16) {
-		guard let (address, _) = getConfig(for: pinger) else {
+		guard let (address, config) = getConfig(for: pinger) else {
 			print("Error: callback from unregistered pinger.")
 			return
 		}
 		
-		print("Ping " + address + ": didSendPacket")
+        if !config.isQuiet {
+            print("Ping " + address + ": didSendPacket")
+        }
 	}
 	
 	public func simplePing(_ pinger: SimplePing, didReceivePingResponsePacket packet: Data, sequenceNumber: UInt16) {
@@ -119,7 +127,9 @@ public class Ping: NSObject, SimplePingDelegate {
 			return
 		}
 		
-		print("Ping " + address + ": didReceivePingResponsePacket")
+        if !config.isQuiet {
+            print("Ping " + address + ": didReceivePingResponsePacket")
+        }
 		config.completion?(.succeeded(withLatency: Date.timeIntervalSinceReferenceDate - config.pingStart))
 		removeTask(for: address)
 	}
@@ -134,7 +144,9 @@ public class Ping: NSObject, SimplePingDelegate {
 			return
 		}
 		
-		print("Ping " + address + ": didFailToSendPacket")
+        if !config.isQuiet {
+            print("Ping " + address + ": didFailToSendPacket")
+        }
 		retryPing(for: address, withConfig: config, else: {
 			config.completion?(.notSent(withError: error))
 			self.removeTask(for: address)
@@ -147,7 +159,9 @@ public class Ping: NSObject, SimplePingDelegate {
 			return
 		}
 		
-		print("Ping " + address + ": didFailWithError")
+        if !config.isQuiet {
+            print("Ping " + address + ": didFailWithError")
+        }
 		retryPing(for: address, withConfig: config, else: {
 			config.completion?(.notStarted(withError: error))
 			self.removeTask(for: address)
@@ -160,7 +174,9 @@ public class Ping: NSObject, SimplePingDelegate {
 			return
 		}
 		
-		print("Ping " + address + ": didTimedOut")
+        if !config.isQuiet {
+            print("Ping " + address + ": didTimedOut")
+        }
 		retryPing(for: address, withConfig: config, else: {
 			config.completion?(.timedOut)
 			self.removeTask(for: address)
@@ -169,7 +185,9 @@ public class Ping: NSObject, SimplePingDelegate {
 	
 	private func retryPing(for address: String, withConfig config: PingConfig, else continueBlock: (()->())? = nil) {
 		if config.retries > 0 {
-			print("Ping " + address + ": retrying")
+            if !config.isQuiet {
+                print("Ping " + address + ": retrying")
+            }
 			config.retries -= 1
 			
 			config.timer?.invalidate()

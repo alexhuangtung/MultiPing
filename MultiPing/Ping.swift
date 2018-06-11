@@ -27,8 +27,10 @@ fileprivate class PingConfig {
 	var pingStart: TimeInterval!
 	
 	var retries: Int
+    
+    var isQuiet: Bool
 	
-	init(_ delegate: Ping, _ address: String, _ timeout: TimeInterval, _ retries: Int, _ completion: PingCompletionBlock?) {
+    init(_ delegate: Ping, _ address: String, _ timeout: TimeInterval, _ retries: Int, _ isQuiet: Bool, _ completion: PingCompletionBlock?) {
 		pinger = SimplePing(hostName: address)
 		pinger.delegate = delegate
 		pinger.start()
@@ -36,6 +38,7 @@ fileprivate class PingConfig {
 		self.completion = completion
 		self.timeout = timeout
 		self.retries = retries
+        self.isQuiet = isQuiet
 	}
 }
 
@@ -43,13 +46,13 @@ public class Ping: NSObject, SimplePingDelegate {
 	public static let shared = Ping()
 	private var tasks = [String : PingConfig]()
 	
-	public func start(_ address: String, timeout: TimeInterval = 3, retries: Int = 5, completion: PingCompletionBlock? = nil) {
+    public func start(_ address: String, timeout: TimeInterval = 3, retries: Int = 5, isQuiet: Bool = false, completion: PingCompletionBlock? = nil) {
 		guard tasks[address] == nil else {
 			print("Alredy pinging " + address)
 			return
 		}
 		
-		tasks[address] = PingConfig(self, address, timeout, retries, completion)
+		tasks[address] = PingConfig(self, address, timeout, retries, isQuiet, completion)
 	}
 	
 	public func stop(_ address: String) {
